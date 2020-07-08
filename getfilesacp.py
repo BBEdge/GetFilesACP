@@ -9,7 +9,45 @@ import tempfile
 import zipfile
 
 
+# bb43-111-S5cp-202007070226.SSHOW_PORT.txt.gz
+# brocade61-S6cp-202007070229.SSHOW_PORT.txt.gz
+# mega311_128-10.101.40.76-S6cp-202007070230.SSHOW_PORT.txt.gz
+
+
+def extract_files(ssfiles, switch, acp, sshowfiles):
+    switch = ''.join(switch)
+    acp = ''.join(acp)
+
+    for item in sshowfiles:
+#        result = re.search(r'('+switch+'\-'+acp+'\-\d+\.'+item+'\.\S+)', str(ssfiles))
+        result = re.search(r'((?:\S+-)' + acp + '\-\d+\.' + item + '\.\S+)', str(ssfiles))
+        if result:
+            print(result.group(0))
+
+
+#    for files in os.listdir(ssdir):
+#        if fnmatch.fnmatch(files, '*.zip'):
+#            zip = zipfile.ZipFile(ssdir + files)
+#            zipfiles.append(files)
+#            zip.extractall(tempdir)
+
+#            if values := ''.join(re.findall(r'(?<=\_)\w*(?=\_)', files)):
+#                switchname.append(values)
+#                switchdir = os.path.join(tempdir, values)
+
+#                '''create dir to extract files from supportsave'''
+#                try:
+#                    os.mkdir(switchdir)
+#                except OSError as e:
+#                    print('Creation of the directory %s failed' % switchdir, e)
+
+
 def main():
+    sshowfiles = ['SSHOW_SYS.txt',
+                 'SSHOW_PORT.txt',
+                 'SSHOW_SERVICE.txt',
+                 'SSHOW_FABRIC.txt']
+
     outlist = []
     dinput = '/tmp/ss'
 #    dinput = '/tmp/oper/SS/commander/202005200220'
@@ -37,14 +75,13 @@ def main():
                     f = zipfile.ZipFile.namelist(zip)
                     switch = re.findall(r'(?<=_)\w*\S*(?=_)', files)
                     datass = re.findall(r'(?<=\_)\d+', files)
-                    fileout = os.path.join(output, ''.join(datass)) + '.out'
+#                    fileout = os.path.join(output, ''.join(datass)) + '.out'
 #                    print('Waiting for processing supportsave {}'.format(*switch))
-                    for item in f:
-#                        print(item)
-                        if re.findall(r'\w*\S*(S\dcp)\-\d+.SSHOW_PORT.txt.gz', item):
-                            acp = re.findall(r'(?<=\-)\S\dcp', item)
-                            print(switch, acp)
-#                            pass
+                    for ssfiles in f:
+                        if re.findall(r'\w*\S*(S\dcp)\-\d+.SSHOW_PORT.txt.gz', ssfiles):
+                            acp = re.findall(r'(?<=\-)\S\dcp', ssfiles)
+#                            print(switch, acp)
+                            extract_files(f, switch, acp, sshowfiles)
 
             try:
                 shutil.rmtree(tempdir)
