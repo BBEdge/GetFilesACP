@@ -19,7 +19,6 @@ def extract_files(ssfiles, switch, acp, sshowfiles):
     acp = ''.join(acp)
 
     for item in sshowfiles:
-#        result = re.search(r'('+switch+'\-'+acp+'\-\d+\.'+item+'\.\S+)', str(ssfiles))
         result = re.search(r'((?:\S+-)' + acp + '\-\d+\.' + item + '\.\S+)', str(ssfiles))
         if result:
             print(result.group(0))
@@ -74,13 +73,12 @@ def main():
                     zip = zipfile.ZipFile(os.path.join(dinput, files))
                     f = zipfile.ZipFile.namelist(zip)
                     switch = re.findall(r'(?<=_)\w*\S*(?=_)', files)
-                    datass = re.findall(r'(?<=\_)\d+', files)
+#                    datass = re.findall(r'(?<=\_)\d+', files)
 #                    fileout = os.path.join(output, ''.join(datass)) + '.out'
 #                    print('Waiting for processing supportsave {}'.format(*switch))
                     for ssfiles in f:
                         if re.findall(r'\w*\S*(S\dcp)\-\d+.SSHOW_PORT.txt.gz', ssfiles):
                             acp = re.findall(r'(?<=\-)\S\dcp', ssfiles)
-#                            print(switch, acp)
                             extract_files(f, switch, acp, sshowfiles)
 
             try:
