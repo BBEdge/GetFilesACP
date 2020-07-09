@@ -8,48 +8,37 @@ import shutil
 import tempfile
 import zipfile
 
-
 # bb43-111-S5cp-202007070226.SSHOW_PORT.txt.gz
 # brocade61-S6cp-202007070229.SSHOW_PORT.txt.gz
 # mega311_128-10.101.40.76-S6cp-202007070230.SSHOW_PORT.txt.gz
+# (?:\S+\-)\S\dcp\-\d+\.\S+
+# ((?:\S+\-)\S\dcp\-\d+\.\w+(\.\w+){2})
+# bb43-111-S4cp-202007070222.SSHOW_SYS.txt.gz
+# bb43-111-S5cp-202007070223.SSHOW_SYS.txt.gz
 
-
-def extract_files(ssfiles, switch, acp, sshowfiles):
+def extract_files(zip, switch, datass, ssfiles, tempdir, acp, sshowfiles):
     switch = ''.join(switch)
+    datass = ''.join(datass)
     acp = ''.join(acp)
+    ssfiles = ' '.join(ssfiles)
+    gzfiles = []
 
     for item in sshowfiles:
-        result = re.search(r'((?:\S+-)' + acp + '\-\d+\.' + item + '\.\S+)', str(ssfiles))
-        if result:
-            print(result.group(0))
+        match = re.search(r'((?:\S+-)' + acp + '\-\d+\.' + item + '\.txt\.gz)', ssfiles)
+        if match:
+            zip.extract(match.group(0), tempdir)
+            gz = os.path.join(tempdir, match.group(0))
+            words = (switch, datass, item, gz)
+            gzfiles.append(words)
 
-
-#    for files in os.listdir(ssdir):
-#        if fnmatch.fnmatch(files, '*.zip'):
-#            zip = zipfile.ZipFile(ssdir + files)
-#            zipfiles.append(files)
-#            zip.extractall(tempdir)
-
-#            if values := ''.join(re.findall(r'(?<=\_)\w*(?=\_)', files)):
-#                switchname.append(values)
-#                switchdir = os.path.join(tempdir, values)
-
-#                '''create dir to extract files from supportsave'''
-#                try:
-#                    os.mkdir(switchdir)
-#                except OSError as e:
-#                    print('Creation of the directory %s failed' % switchdir, e)
-
+    return gzfiles
 
 def main():
-    sshowfiles = ['SSHOW_SYS.txt',
-                 'SSHOW_PORT.txt',
-                 'SSHOW_SERVICE.txt',
-                 'SSHOW_FABRIC.txt']
-
-    outlist = []
+    sshowfiles = ['SSHOW_SYS',
+                 'SSHOW_PORT',
+                 'SSHOW_SERVICE',
+                 'SSHOW_FABRIC']
     dinput = '/tmp/ss'
-#    dinput = '/tmp/oper/SS/commander/202005200220'
     output = '/tmp/out'
 
 #    parser = argparse.ArgumentParser(description='Process some integers.')
@@ -68,19 +57,22 @@ def main():
                 except Exception as e:
                     print('Unable to create directory %s.' % output)
 
+            # get archive supportsave files
             for files in sorted([f for f in os.listdir(dinput) if os.path.isfile(os.path.join(dinput, f))]):
                 if re.match(r'supportsave_\w*\S*_\d+.zip', files):
                     zip = zipfile.ZipFile(os.path.join(dinput, files))
                     f = zipfile.ZipFile.namelist(zip)
-                    switch = re.findall(r'(?<=_)\w*\S*(?=_)', files)
-#                    datass = re.findall(r'(?<=\_)\d+', files)
+                    switch = re.findall(r'(?<=_)\w*\S*(?=_)', files) # get switchname from file name
+                    datass = re.findall(r'(?<=\_)\d+', files) # get data from file name
 #                    fileout = os.path.join(output, ''.join(datass)) + '.out'
 #                    print('Waiting for processing supportsave {}'.format(*switch))
                     for ssfiles in f:
                         if re.findall(r'\w*\S*(S\dcp)\-\d+.SSHOW_PORT.txt.gz', ssfiles):
                             acp = re.findall(r'(?<=\-)\S\dcp', ssfiles)
-                            extract_files(f, switch, acp, sshowfiles)
+                            gzfiles = extract_files(zip, switch, datass, f, tempdir, acp, sshowfiles)
 
+                    for item in gzfiles:
+                        print(item)
             try:
                 shutil.rmtree(tempdir)
                 print("Temp directory '%s' has been removed successfully." % tempdir)
