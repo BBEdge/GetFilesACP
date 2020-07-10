@@ -16,6 +16,7 @@ class SshowSys:
                 else:
                     '''parcing here'''
                     print(line)
+
                     '''end parcing'''
                     end = re.search(r'([*]{2} \w+ \w+ \w+ [*]{2})', line)
                     if end:

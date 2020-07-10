@@ -59,17 +59,23 @@ def main():
                 try:
                     os.mkdir(output)
                 except Exception as e:
-                    print('Unable to create directory %s.' % output)
+                    print('Unable to create directory %s.' % output, e)
 
-            # get archive supportsave files
+            ''' get archive supportsave files '''
             for files in sorted([f for f in os.listdir(dinput) if os.path.isfile(os.path.join(dinput, f))]):
                 if re.match(r'supportsave_\w*\S*_\d+.zip', files):
                     zip = zipfile.ZipFile(os.path.join(dinput, files))
                     f = zipfile.ZipFile.namelist(zip)
-                    switch = re.findall(r'(?<=_)\w*\S*(?=_)', files) # get switchname from file name
-                    datass = re.findall(r'(?<=\_)\d+', files) # get data from file name
+
+                    ''' get switchname from file name '''
+                    switch = re.findall(r'(?<=_)\w*\S*(?=_)', files)
+
+                    ''' get data from file name '''
+                    datass = re.findall(r'(?<=\_)\d+', files)
 #                    fileout = os.path.join(output, ''.join(datass)) + '.out'
 #                    print('Waiting for processing supportsave {}'.format(*switch))
+
+                    ''' find ACP '''
                     for ssfiles in f:
                         if re.findall(r'\w*\S*(S\dcp)\-\d+.SSHOW_PORT.txt.gz', ssfiles):
                             acp = re.findall(r'(?<=\-)\S\dcp', ssfiles)
