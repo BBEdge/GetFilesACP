@@ -3,7 +3,7 @@ import gzip
 
 
 class SshowSys:
-    global fid
+
     def parce_sshowsys(item):
         skip = True
 
@@ -11,6 +11,7 @@ class SshowSys:
             for line in f:
                 uline = line.strip()
                 words = uline.split()
+                switch = item[0]
                 switchshow = re.search(r'(\w+ [\/\w]+switchshow)', uline)
                 if skip:
                     if switchshow:
@@ -21,12 +22,16 @@ class SshowSys:
                     fid = re.search(r'FID\:\s(\d+)', uline)
                     if fid:
                         fid = fid.group(1)
-                    ''' make Director '''
-                    director = re.search(r'Index.(?:Slot)', uline)
-                    if director:
-                        print(item[0], fid, "Director")
+                        item.parce_switchshow(uline, switch, fid)
 
                     '''end parcing'''
                     end = re.search(r'([*]{2} \w+ \w+ \w+ [*]{2})', uline)
                     if end:
                         skip = True
+
+
+    def parce_switchshow(uline, switch, fid):
+        ''' make Director '''
+        director = re.search(r'Index.(?:Slot)', uline)
+        if director:
+            print(switch, fid, "Director")
