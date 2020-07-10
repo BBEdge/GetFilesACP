@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 import argparse
 import fnmatch
-import gzip
 import os
 import re
 import shutil
 import tempfile
 import zipfile
+from sshowsys import SshowSys
+
 
 # bb43-111-S5cp-202007070226.SSHOW_PORT.txt.gz
 # brocade61-S6cp-202007070229.SSHOW_PORT.txt.gz
@@ -15,6 +16,7 @@ import zipfile
 # ((?:\S+\-)\S\dcp\-\d+\.\w+(\.\w+){2})
 # bb43-111-S4cp-202007070222.SSHOW_SYS.txt.gz
 # bb43-111-S5cp-202007070223.SSHOW_SYS.txt.gz
+
 
 def extract_files(zip, switch, datass, ssfiles, tempdir, acp, sshowfiles):
     switch = ''.join(switch)
@@ -34,28 +36,8 @@ def extract_files(zip, switch, datass, ssfiles, tempdir, acp, sshowfiles):
     return gzfiles
 
 
-def parce_sshowsys(item):
-    skip = True
-    count = 0
-
-    with gzip.open(item[3], 'rt', encoding='utf8', errors='ignore') as f:
-        for line in f:
-            key, match = search_line(line)
-            if skip:
-                if key == 'start_switch':
-                    skip = False
-            else:
-                count = count + 1
-                print(count)
-                if key == 'end':
-                    skip = True
-
-        #print(line)
-
-
-
-
 def main():
+    global gzfiles
     sshowfiles = ['SSHOW_SYS.txt',
                  'SSHOW_PORT.txt',
                  'SSHOW_SERVICE.txt',
@@ -96,7 +78,7 @@ def main():
                     for item in gzfiles:
                         if item[2] in sshowfiles[0]:
                             '''parce SSHOW_SYS'''
-                            parce_sshowsys(item)
+                            SshowSys.parce_sshowsys(item)
 
             try:
                 shutil.rmtree(tempdir)
