@@ -95,7 +95,8 @@ def main():
 
                     for item in gzfiles:
                         if item[2] in sshowfiles[0]:
-                            parce_sshowsys(item)        #parce SSHOW_SYS
+                            '''parce SSHOW_SYS'''
+                            parce_sshowsys(item)
 
             try:
                 shutil.rmtree(tempdir)
