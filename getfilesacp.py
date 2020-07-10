@@ -85,7 +85,6 @@ def main():
                         ''' parce SSHOW_SYS '''
                         if item[2] in sshowfiles[0]:
                             SshowSys.parce_sshowsys(item)
-
                         ''' parce SSHOW_PORT '''
                         if item[2] in sshowfiles[1]:
                             pass
