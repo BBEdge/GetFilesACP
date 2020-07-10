@@ -82,9 +82,13 @@ def main():
                             gzfiles = extract_files(zip, switch, datass, f, tempdir, acp, sshowfiles)
 
                     for item in gzfiles:
+                        ''' parce SSHOW_SYS '''
                         if item[2] in sshowfiles[0]:
-                            '''parce SSHOW_SYS'''
                             SshowSys.parce_sshowsys(item)
+
+                        ''' parce SSHOW_PORT '''
+                        if item[2] in sshowfiles[1]:
+                            pass
 
             try:
                 shutil.rmtree(tempdir)
