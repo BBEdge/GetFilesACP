@@ -24,7 +24,7 @@ def extract_files(zip, switch, datass, ssfiles, tempdir, acp, sshowfiles):
     gzfiles = []
 
     for item in sshowfiles:
-        match = re.search(r'((?:\S+-)' + acp + '\-\d+\.' + item + '\.txt\.gz)', ssfiles)
+        match = re.search(r'((?:\S+-)' + acp + '\-\d+\.' + item + '\.gz)', ssfiles)
         if match:
             zip.extract(match.group(0), tempdir)
             gz = os.path.join(tempdir, match.group(0))
@@ -33,11 +33,33 @@ def extract_files(zip, switch, datass, ssfiles, tempdir, acp, sshowfiles):
 
     return gzfiles
 
+
+def parce_sshowsys(item):
+    skip = True
+    count = 0
+
+    with gzip.open(item[3], 'rt', encoding='utf8', errors='ignore') as f:
+        for line in f:
+            key, match = search_line(line)
+            if skip:
+                if key == 'start_switch':
+                    skip = False
+            else:
+                count = count + 1
+                print(count)
+                if key == 'end':
+                    skip = True
+
+        #print(line)
+
+
+
+
 def main():
-    sshowfiles = ['SSHOW_SYS',
-                 'SSHOW_PORT',
-                 'SSHOW_SERVICE',
-                 'SSHOW_FABRIC']
+    sshowfiles = ['SSHOW_SYS.txt',
+                 'SSHOW_PORT.txt',
+                 'SSHOW_SERVICE.txt',
+                 'SSHOW_FABRIC.txt']
     dinput = '/tmp/ss'
     output = '/tmp/out'
 
@@ -72,7 +94,9 @@ def main():
                             gzfiles = extract_files(zip, switch, datass, f, tempdir, acp, sshowfiles)
 
                     for item in gzfiles:
-                        print(item)
+                        if item[2] in sshowfiles[0]:
+                            parce_sshowsys(item)        #parce SSHOW_SYS
+
             try:
                 shutil.rmtree(tempdir)
                 print("Temp directory '%s' has been removed successfully." % tempdir)
