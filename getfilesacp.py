@@ -6,21 +6,14 @@ import re
 import shutil
 import tempfile
 import zipfile
+import gzip
+from compdict import search_line
 from sshowsys import SshowSys
 
 
-# bb43-111-S5cp-202007070226.SSHOW_PORT.txt.gz
-# brocade61-S6cp-202007070229.SSHOW_PORT.txt.gz
-# mega311_128-10.101.40.76-S6cp-202007070230.SSHOW_PORT.txt.gz
-# (?:\S+\-)\S\dcp\-\d+\.\S+
-# ((?:\S+\-)\S\dcp\-\d+\.\w+(\.\w+){2})
-# bb43-111-S4cp-202007070222.SSHOW_SYS.txt.gz
-# bb43-111-S5cp-202007070223.SSHOW_SYS.txt.gz
-
-
-def extract_files(zip, switch, datass, ssfiles, tempdir, acp, sshowfiles):
+def extract_files(zip, switch, datess, ssfiles, tempdir, acp, sshowfiles):
     switch = ''.join(switch)
-    datass = ''.join(datass)
+    datess = ''.join(datess)
     acp = ''.join(acp)
     ssfiles = ' '.join(ssfiles)
     gzfiles = []
@@ -30,14 +23,47 @@ def extract_files(zip, switch, datass, ssfiles, tempdir, acp, sshowfiles):
         if match:
             zip.extract(match.group(0), tempdir)
             gz = os.path.join(tempdir, match.group(0))
-            words = (switch, datass, item, gz)
+            words = (switch, datess, item, gz)
             gzfiles.append(words)
 
     return gzfiles
 
 
+def parse_sshowsys(switchname, date, sshowfiles):
+    skip = True
+    switchshow = []
+    porterroshow = []
+    director = ''
+    fid = ''
+    header = ''
+
+    with gzip.open(sshowfiles, 'rt', encoding='utf8', errors='ignore') as f:
+        for line in f:
+            uline = line.strip()
+            words = uline.split()
+            key, match = search_line(uline)
+            if skip:
+#                if key == 'director':
+                if key == 'switchshow':
+                    skip = False
+            else:
+                ports = re.search(r'\d+\s+\d+\s+[\w]{6}|\d+\s+\d+\s+\-{6}', uline)
+                if ports:
+                    words[1] = '/'.join(words[1:3])
+                    del (words[2])
+                    del (words[3])
+                    words[5] = ' '.join(str(e) for e in words[5:])
+                    del (words[6:])
+#                    print('{:6s} {:7s} {:9s} {:6s} {:12s} {}'.format(*words))
+#                            words[0], words[1], words[2], words[3], words[4], words[5]))
+
+
+                '''end parsing'''
+                if key == 'end':
+                    skip = True
+
+
 def main():
-    global gzfiles
     sshowfiles = ['SSHOW_SYS.txt',
                  'SSHOW_PORT.txt',
                  'SSHOW_SERVICE.txt',
@@ -70,8 +96,8 @@ def main():
                     ''' get switchname from file name '''
                     switch = re.findall(r'(?<=_)\w*\S*(?=_)', files)
 
-                    ''' get data from file name '''
-                    datass = re.findall(r'(?<=\_)\d+', files)
+                    ''' get date from file name '''
+                    datess = re.findall(r'(?<=\_)\d+', files)
 #                    fileout = os.path.join(output, ''.join(datass)) + '.out'
 #                    print('Waiting for processing supportsave {}'.format(*switch))
 
@@ -79,15 +105,32 @@ def main():
                     for ssfiles in f:
                         if re.findall(r'\w*\S*(S\dcp)\-\d+.SSHOW_PORT.txt.gz', ssfiles):
                             acp = re.findall(r'(?<=\-)\S\dcp', ssfiles)
-                            gzfiles = extract_files(zip, switch, datass, f, tempdir, acp, sshowfiles)
+                            gzfiles = extract_files(zip, switch, datess, f, tempdir, acp, sshowfiles)
+#                            print(gzfiles)
 
+                    ''' parse alias '''
                     for item in gzfiles:
-                        ''' parce SSHOW_SYS '''
                         if item[2] in sshowfiles[0]:
-                            SshowSys.parce_sshowsys(item)
-                        ''' parce SSHOW_PORT '''
-                        if item[2] in sshowfiles[1]:
+                            alias = SshowSys.parse_alias(item[0], item[1], item[3])
                             pass
+
+                    ''' parse switchshow '''
+                    for item in gzfiles:
+                        if item[2] in sshowfiles[0]:
+#                            print(switch, datess, sshowfiles[0])
+#                            parse_sshowsys(item[0], item[1], item[3])
+                            switchshow = SshowSys.parse_switchshow(item[0], item[1], item[3])
+                            pass
+
+                    ''' parce porterrshow '''
+                    for item in gzfiles:
+                        if item[2] in sshowfiles[0]:
+#                            print(switch, datess, sshowfiles[1])
+#                            parse_sshowport(item[0], item[1], item[3])
+                            porterrshow = SshowSys.parse_porterrshow(item[0], item[1], item[3])
+                            pass
+
+            SshowSys.portinfo(alias, switchshow, porterrshow)
 
             try:
                 shutil.rmtree(tempdir)
