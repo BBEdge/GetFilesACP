@@ -7,7 +7,7 @@ import shutil
 import tempfile
 import zipfile
 import gzip
-from compdict import search_line
+#from compdict import search_line
 from sshowsys import SshowSys
 
 
@@ -70,6 +70,7 @@ def main():
                  'SSHOW_FABRIC.txt']
     dinput = '/tmp/ss'
     output = '/tmp/out'
+    words = ''
 
 #    parser = argparse.ArgumentParser(description='Process some integers.')
 #    parser.add_argument('-i', '--dinput', help='Directory with supportsave files', required=True)
@@ -112,15 +113,16 @@ def main():
                     for item in gzfiles:
                         if item[2] in sshowfiles[0]:
                             alias = SshowSys.parse_alias(item[0], item[1], item[3])
-                            pass
+#                        return alias
 
                     ''' parse switchshow '''
                     for item in gzfiles:
                         if item[2] in sshowfiles[0]:
 #                            print(switch, datess, sshowfiles[0])
 #                            parse_sshowsys(item[0], item[1], item[3])
-                            switchshow = SshowSys.parse_switchshow(item[0], item[1], item[3])
-                            pass
+                            ''' switch, datess, sshowfiles[0] '''
+#                            switchshow = SshowSys.parse_switchshow(item[0], item[1], item[3])
+                            switchshow = SshowSys.parse_switchshow(alias, item[3])
 
                     ''' parce porterrshow '''
                     for item in gzfiles:
@@ -128,16 +130,21 @@ def main():
 #                            print(switch, datess, sshowfiles[1])
 #                            parse_sshowport(item[0], item[1], item[3])
                             porterrshow = SshowSys.parse_porterrshow(item[0], item[1], item[3])
-                            pass
 
-            SshowSys.portinfo(alias, switchshow, porterrshow)
+#            SshowSys.portinfo(alias, switchshow, porterrshow)
+#            for ele in switchshow:
+#                print(ele)
+#                print('{:6s} {:7s} {:9s} {:6s} {:12s} {}'.format(*ele))
 
             try:
                 shutil.rmtree(tempdir)
                 print("Temp directory '%s' has been removed successfully." % tempdir)
             except OSError as e:
                 print('Delete of the directory %s failed.' % tempdir, e)
-                    
+
+        else:
+            print('The diretory %s not exist.' % dinput)
+
     except FileNotFoundError as e:
         print(e)
 
