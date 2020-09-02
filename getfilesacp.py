@@ -6,9 +6,9 @@ import re
 import shutil
 import tempfile
 import zipfile
-import gzip
-#from compdict import search_line
 from sshowsys import SshowSys
+from writetofile import write_csv
+from writetofile import write_exel
 
 
 def extract_files(zip, switch, datess, ssfiles, tempdir, acp, sshowfiles):
@@ -27,40 +27,6 @@ def extract_files(zip, switch, datess, ssfiles, tempdir, acp, sshowfiles):
             gzfiles.append(words)
 
     return gzfiles
-
-
-def parse_sshowsys(switchname, date, sshowfiles):
-    skip = True
-    switchshow = []
-    porterroshow = []
-    director = ''
-    fid = ''
-    header = ''
-
-    with gzip.open(sshowfiles, 'rt', encoding='utf8', errors='ignore') as f:
-        for line in f:
-            uline = line.strip()
-            words = uline.split()
-            key, match = search_line(uline)
-            if skip:
-#                if key == 'director':
-                if key == 'switchshow':
-                    skip = False
-            else:
-                ports = re.search(r'\d+\s+\d+\s+[\w]{6}|\d+\s+\d+\s+\-{6}', uline)
-                if ports:
-                    words[1] = '/'.join(words[1:3])
-                    del (words[2])
-                    del (words[3])
-                    words[5] = ' '.join(str(e) for e in words[5:])
-                    del (words[6:])
-#                    print('{:6s} {:7s} {:9s} {:6s} {:12s} {}'.format(*words))
-#                            words[0], words[1], words[2], words[3], words[4], words[5]))
-
-
-                '''end parsing'''
-                if key == 'end':
-                    skip = True
 
 
 def main():
@@ -99,7 +65,8 @@ def main():
 
                     ''' get date from file name '''
                     datess = re.findall(r'(?<=\_)\d+', files)
-#                    fileout = os.path.join(output, ''.join(datass)) + '.out'
+                    fileout = os.path.join(output, ''.join(datess)) + '.out'
+#                    print(fileout)
 #                    print('Waiting for processing supportsave {}'.format(*switch))
 
                     ''' find ACP '''
@@ -119,7 +86,6 @@ def main():
                     for item in gzfiles:
                         if item[2] in sshowfiles[0]:
 #                            print(switch, datess, sshowfiles[0])
-#                            parse_sshowsys(item[0], item[1], item[3])
                             ''' switch, datess, sshowfiles[0] '''
 #                            switchshow = SshowSys.parse_switchshow(item[0], item[1], item[3])
                             switchshow = SshowSys.parse_switchshow(alias, item[3])
@@ -128,13 +94,17 @@ def main():
                     for item in gzfiles:
                         if item[2] in sshowfiles[0]:
 #                            print(switch, datess, sshowfiles[1])
-#                            parse_sshowport(item[0], item[1], item[3])
                             porterrshow = SshowSys.parse_porterrshow(item[0], item[1], item[3])
 
-#            SshowSys.portinfo(alias, switchshow, porterrshow)
 #            for ele in switchshow:
 #                print(ele)
-#                print('{:6s} {:7s} {:9s} {:6s} {:12s} {}'.format(*ele))
+
+            ''' write switchshow to file '''
+            header = 'index, slot, port, address, speed, state, proto'
+#            fileout = os.path.join(output, ''.join(switch) + '_' + ''.join(datess)) + '.csv'
+            fileout = os.path.join(output, ''.join(switch) + '_' + ''.join(datess)) + '_switchshow.xlsx'
+#            write_csv(header, switchshow, fileout)
+            write_exel(header, switchshow, fileout)
 
             try:
                 shutil.rmtree(tempdir)

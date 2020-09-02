@@ -20,9 +20,10 @@ class SshowSys:
 
     def parse_switchshow(self, sshowfile):
         skip = True
+        words = []
         switchshow = []
         alias = self
-        director = ''
+        switchshow.append(['index', 'slot', 'port', 'address', 'speed', 'state', 'proto', 'alias'])
 
         with gzip.open(sshowfile, 'rt', encoding='utf8', errors='ignore') as f:
             for line in f:
@@ -40,18 +41,23 @@ class SshowSys:
 #                        del (words[3])
                         del (words[4])
                         speed = re.findall(r'\d{1,2}', words[4])
-                        words [4] = ''.join(speed)
+                        words[4] = ' '.join(speed)
                         words[6] = ' '.join(str(e) for e in words[6:])
                         del (words[7:])
 
-#                        fport = re.findall(r'F-Port ((?:[0-9a-fA-F]:?){16})', words[5])
-#                        for item in alias:
-#                            if fport.group(0) == item[1]:
-#                                words[5] = item[0]
+                        fport = re.search(r'F-Port ((?:[0-9a-fA-F]:?){16})', words[6])
+                        if fport:
+                            for item in alias:
+                                if fport.group(1) == item[1]:
+                                    words += item[0].split(',')
+#                                    print(item[0])
+#                            else:
+#                                words += 'No alias'.split(',')
+#                                print(fport.group(1))
 
 #                        print(words)
-                    #                    print('{:6s} {:7s} {:9s} {:6s} {:12s} {}'.format(*words))
-                    #                            words[0], words[1], words[2], words[3], words[4], words[5]))
+#                    print('{:6s} {:7s} {:9s} {:6s} {:12s} {}'.format(*words))
+#                            words[0], words[1], words[2], words[3], words[4], words[5]))
                         switchshow.append(words)
                     else:
                         skip = True
@@ -75,37 +81,12 @@ class SshowSys:
                 else:
                     ports = re.search(r' \d{1,3}|^\d{1,3}:', uline)
                     if ports:
-                        words[0] = ''.join(re.findall(r'\d{1,3}', words[0]))
-
-                        for ele in words:
-
-                            ''' kilo '''
-                            match = re.search(r'(\d{1,3}.\d{1})(?=k)', uline)
-                            index = words.index(match.group(1))
-                            if match:
-                                words = int(float(''.join(match.group(1))) * 1000)
-                                print(index, words)
-
-#                        item = SshowSys.count_porterrs(words[1:])
-#                        print(item)
-#                        porterrshow.append(words)
-#                        print(words)
+#                        words[0] = ''.join(re.findall(r'\d{1,3}', words[0]))
+                        porterrshow.append(words)
                     else:
                         skip = True
 
-#        return porterrshow
-
-
-    def portinfo(self, switchshow, porterrshow):
-        alias = self
-
-        for p, e in switchshow + porterrshow:
-            print(p, e)
-#        print([i for i in switchshow + porterrshow if i in switchshow or i in porterrshow])
-#        for ele in list:
-#            print(ele)
-
-        pass
+        return porterrshow
 
 
     def count_porterrs(self):
